@@ -1,32 +1,34 @@
-from datetime import date, datetime, timedelta
+from datetime import timedelta, date, datetime
 
 
 def get_birthdays_per_week(users):
-    users = {
-        "Monday": [],
-        "Tuesday": [],
-        "Wednesday": [],
-        "Thursday": [],
-        "Friday": [],
-    }
-    current_day = date.today().weekday()
-    current_date = date.today()
-    monday = current_date - timedelta(days=current_day)
-    for user in users:
-        user_birthday = user["birthday"]
-        user_birthday_this_year = date(
-            current_date.year, user_birthday.month, user_birthday.day
-        )
-        if user_birthday_this_year < current_date:
-            user_birthday_this_year = date(
-                current_date.year + 1, user_birthday.month, user_birthday.day
-            )
-        days_until_birthday = (user_birthday_this_year - current_date).days
-        if 0 <= days_until_birthday <= 4:
-            day_of_week = (monday + timedelta(days_until_birthday)).strftime("%A")
-            users[day_of_week].append(user["name"])
+    if not users:
+        return {}
 
-    return users
+    today = date.today()
+
+    current_day_of_week = today.weekday()
+
+    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    birthdays_per_week = {day: [] for day in weekdays}
+
+    for user in users:
+        birthday = user["birthday"]
+
+        if birthday < today:
+            birthday = birthday.replace(year=today.year + 1)
+
+        day_of_week = birthday.weekday()
+
+        if day_of_week >= current_day_of_week:
+            day_name = weekdays[(day_of_week - current_day_of_week) % 5]
+            birthdays_per_week[day_name].append(user["name"])
+        else:
+            next_monday = today + timedelta(days=(7 - current_day_of_week))
+            day_name = "Monday"
+            birthdays_per_week[day_name].append(user["name"])
+
+    return birthdays_per_week
 
 
 if __name__ == "__main__":
