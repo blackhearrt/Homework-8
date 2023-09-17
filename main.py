@@ -1,43 +1,48 @@
-from datetime import timedelta, date, datetime
+from datetime import datetime, date
 
 
 def get_birthdays_per_week(users):
     if not users:
         return {}
 
-    today = date.today()
-
-    current_day_of_week = today.weekday()
-
-    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    birthdays_per_week = {day: [] for day in weekdays}
-
+    today = datetime.now().date()
+    
+    # Створюємо порожні словники для днів цього тижня і наступного тижня
+    this_week_birthdays = {}
+    next_week_birthdays = {}
+    
+    # Створюємо список днів тижня для використання в ключах словників
+    days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    
+    # Перебираємо користувачів і їх дні народження
     for user in users:
-        birthday = user["birthday"]
+        name = user['name']
+        birthday = user['birthday']
+        
+        # Визначаємо різницю між поточною датою і днем народження
+        delta = birthday - today
+        
+        # Перевіряємо, чи день народження є в майбутньому
+        if delta.days >= 0:
+            # Визначаємо день народження наступного тижня для поточної дати
+            days_until_birthday = (delta)
+            if days_until_birthday <= 6:
+                day_of_week = days_of_week[(today.weekday() + days_until_birthday) % 5]
+                next_week_birthdays.setdefault(day_of_week, []).append(name)
+    
+    # Переносимо вихідні дні на понеділок
+    for day in ['Saturday', 'Sunday']:
+        next_week_birthdays.setdefault('Monday', []).extend(next_week_birthdays.pop(day, []))
+    
+    return next_week_birthdays
 
-        if birthday < today:
-            birthday = birthday.replace(year=today.year + 1)
-
-        day_of_week = birthday.weekday()
-
-        if day_of_week >= current_day_of_week:
-            day_name = weekdays[(day_of_week - current_day_of_week) % 5]
-            birthdays_per_week[day_name].append(user["name"])
-        else:
-            next_monday = today + timedelta(days=(7 - current_day_of_week))
-            day_name = "Monday"
-            birthdays_per_week[day_name].append(user["name"])
-
-    return birthdays_per_week
-
-
+# Приклад використання:
 if __name__ == "__main__":
     users = [
-        {"name": "Jan Koum", "birthday": datetime(1976, 1, 1).date()},
+        {"name": "Bill Gates", "birthday": datetime(1955, 1, 1).date()},
+        {"name": "Jan", "birthday": datetime(1990, 2, 2).date()},
+        {"name": "Kim", "birthday": datetime(1985, 3, 3).date()}
     ]
-
-    result = get_birthdays_per_week(users)
-    print(result)
-    # Виводимо результат
-    for day_name, names in result.items():
-        print(f"{day_name}: {', '.join(names)}")
+    
+    birthdays = get_birthdays_per_week(users)
+    print(birthdays)
