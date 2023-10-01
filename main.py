@@ -1,48 +1,44 @@
-from datetime import datetime, date
+from datetime import date, datetime, timedelta
+
 
 
 def get_birthdays_per_week(users):
     if not users:
         return {}
-
-    today = datetime.now().date()
     
-    # Створюємо порожні словники для днів цього тижня і наступного тижня
-    this_week_birthdays = {}
-    next_week_birthdays = {}
+    # Визначення поточної дати та інтервалу в тиждень.
+    today = date.today()
+    next_week = today + timedelta(days=7)  
     
-    # Створюємо список днів тижня для використання в ключах словників
-    days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    # Створення робочих словників.
+    weekday = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday'}
+    birthdays = {day: [] for day in weekday.values()}
     
-    # Перебираємо користувачів і їх дні народження
+    # Сортування днів народження та додавання іменинників до словника.
     for user in users:
-        name = user['name']
-        birthday = user['birthday']
+        name = user['name'].split()[0]
+        birthday = user['birthday'].replace(year=today.year)
         
-        # Визначаємо різницю між поточною датою і днем народження
-        delta = birthday - today
-        
-        # Перевіряємо, чи день народження є в майбутньому
-        if delta.days >= 0:
-            # Визначаємо день народження наступного тижня для поточної дати
-            days_until_birthday = (delta)
-            if days_until_birthday <= 6:
-                day_of_week = days_of_week[(today.weekday() + days_until_birthday) % 5]
-                next_week_birthdays.setdefault(day_of_week, []).append(name)
+        if birthday < today:  
+            birthday = birthday.replace(year=today.year + 1)
+        if today <= birthday <= next_week:
+            day_of_week = birthday.strftime("%A")
+            if day_of_week not in weekday.values():
+                day_of_week = "Monday"
+            birthdays[day_of_week].append(name)
+             
+    birthdays = {day: names for day, names in birthdays.items() if names}             
+    return birthdays
     
-    # Переносимо вихідні дні на понеділок
-    for day in ['Saturday', 'Sunday']:
-        next_week_birthdays.setdefault('Monday', []).extend(next_week_birthdays.pop(day, []))
-    
-    return next_week_birthdays
 
-# Приклад використання:
+
 if __name__ == "__main__":
     users = [
-        {"name": "Bill Gates", "birthday": datetime(1955, 1, 1).date()},
-        {"name": "Jan", "birthday": datetime(1990, 2, 2).date()},
-        {"name": "Kim", "birthday": datetime(1985, 3, 3).date()}
+        {"name": "Jan Koum", "birthday": datetime(1976, 1, 1).date()},
     ]
-    
-    birthdays = get_birthdays_per_week(users)
-    print(birthdays)
+
+    result = get_birthdays_per_week(users)
+    print(result)
+    # Виводимо результат
+    for day_name, names in result.items():
+        print(f"{day_name}: {', '.join(names)}")
